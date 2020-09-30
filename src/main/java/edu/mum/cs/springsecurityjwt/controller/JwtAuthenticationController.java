@@ -1,8 +1,8 @@
 package edu.mum.cs.springsecurityjwt.controller;
 
-import edu.mum.cs.springsecurityjwt.model.JwtRequest;
-import edu.mum.cs.springsecurityjwt.model.JwtResponse;
-import edu.mum.cs.springsecurityjwt.service.JwtUserDetailsService;
+import edu.mum.cs.springsecurityjwt.model.AuthRequest;
+import edu.mum.cs.springsecurityjwt.model.AuthResponse;
+import edu.mum.cs.springsecurityjwt.service.MyUserDetailsService;
 import edu.mum.cs.springsecurityjwt.util.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,24 +20,23 @@ public class JwtAuthenticationController {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
     @Autowired
-    private JwtUserDetailsService userDetailsService;
+    private MyUserDetailsService userDetailsService;
 
     @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
+    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authenticationRequest) throws Exception {
         authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
-        final UserDetails userDetails = userDetailsService
-                .loadUserByUsername(authenticationRequest.getUsername());
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
         final String token = jwtTokenUtil.generateToken(userDetails);
-        return ResponseEntity.ok(new JwtResponse(token));
+        return ResponseEntity.ok(new AuthResponse(token));
     }
 
     private void authenticate(String username, String password) throws Exception {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
         } catch (DisabledException e) {
-            throw new Exception("USER_DISABLED", e);
+            throw new Exception("User is disabled!", e);
         } catch (BadCredentialsException e) {
-            throw new Exception("INVALID_CREDENTIALS", e);
+            throw new Exception("Incorrect username or password!", e);
         }
     }
 }
